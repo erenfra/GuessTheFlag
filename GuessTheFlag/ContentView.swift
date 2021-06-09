@@ -7,6 +7,21 @@
 
 import SwiftUI
 
+struct FlagImage: ViewModifier{
+    func body(content: Content) -> some View {
+        content
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(Color.black, lineWidth: 1))
+            .shadow(color: Color.black, radius: 2)
+    }
+}
+
+extension View{
+    func something() -> some View{
+        self.modifier(FlagImage())
+    }
+}
+
 struct ContentView: View {
 
     @State private var countries = ["Estonia", "France", "Germany", "Ireland", "Italy", "Nigeria", "Poland", "Russia", "Spain", "UK", "US"].shuffled()
@@ -14,6 +29,9 @@ struct ContentView: View {
     @State private var showingScore = false
     @State private var scoreTitle: String = ""
     @State private var scoreValue: Int = 0
+    @State private var animationAmount = 0.0
+    @State private var correctFlag = false
+
     
     var body: some View {
         
@@ -26,7 +44,7 @@ struct ContentView: View {
                 
                 VStack {
                 
-                    Text("Tap the frag of")
+                    Text("Tap the flag of")
                         .foregroundColor(.white)
                     Text(countries[correctAnswer])
                         .foregroundColor(.white)
@@ -37,13 +55,32 @@ struct ContentView: View {
                 ForEach(0 ..< 3) { number in
                     Button(action: {
                         self.flagTapped(number)
+                        withAnimation {
+                            self.animationAmount = 360
+                        }
+                        
                     }) {
-                        Image(self.countries[number])
-                            .renderingMode(.original)
-                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Color.black, lineWidth: 1))
-                            .shadow(color: .black, radius: 2)
-                            
+                        if self.correctFlag{
+                            if number == self.correctAnswer{
+                                withAnimation{
+                                    Image(self.countries[number])
+                                        .renderingMode(.original)
+                                        .something()
+                                        .rotation3DEffect(Angle(degrees: self.animationAmount), axis: (x: 0, y: 1, z: 0))
+                                }
+                            }
+                            else {
+                                Image(self.countries[number])
+                                    .renderingMode(.original)
+                                    .something()
+                                    .opacity(0.75)
+                            }
+                        }
+                        else {
+                            Image(self.countries[number])
+                                .renderingMode(.original)
+                                .something()
+                        }
                     }
                     
                 }
@@ -68,6 +105,7 @@ struct ContentView: View {
         if number == correctAnswer {
             scoreTitle = "Correct"
             scoreValue += 1
+            correctFlag = true
             
         } else {
             scoreTitle = "Worng! That's the flag of \(countries[number])"
@@ -79,6 +117,8 @@ struct ContentView: View {
     func askQuestion() {
         countries.shuffle()
         correctAnswer = Int.random(in: 0...2)
+        correctFlag = false
+        animationAmount = 0
     }
     
     
@@ -86,6 +126,9 @@ struct ContentView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        Group {
+            ContentView()
+          
+        }
     }
 }
